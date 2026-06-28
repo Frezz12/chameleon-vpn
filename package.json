@@ -1,0 +1,19 @@
+{
+  "name": "my-vpn-client",
+  "private": true,
+  "version": "0.1.0",
+  "description": "VPN client with Nuxt 3 + Tauri + Sing-box",
+  "scripts": {
+    "dev": "concurrently \"npm run nuxt:dev\" \"npm run tauri:dev\"",
+    "nuxt:dev": "cd nuxt-app && npm run dev",
+    "nuxt:build": "cd nuxt-app && npm run build",
+    "nuxt:install": "cd nuxt-app && npm install",
+    "tauri:dev": "cd src-tauri && cargo tauri dev",
+    "tauri:build": "cd src-tauri && cargo tauri build",
+    "build": "npm run nuxt:build && npm run tauri:build",
+    "postinstall": "npm run nuxt:install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,40 @@
+[package]
+name = "vpn-client"
+version = "0.1.0"
+description = "Chameleon VPN client with Nuxt 3 + Tauri + Sing-box"
+authors = ["Chameleon"]
+edition = "2021"
+
+[lib]
+name = "vpn_client_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-process = "2"
+tauri-plugin-os = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+log = "0.4"
+env_logger = "0.11"
+reqwest = { version = "0.12", features = ["json", "socks"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+regex = "1"
+ipnetwork = "0.20"
+maxminddb = "0.24"
+sysinfo = "0.30"
+base64 = "0.22"
+url = "2"
+nix = "0.29"

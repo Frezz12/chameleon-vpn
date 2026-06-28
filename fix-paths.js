@@ -1,0 +1,11 @@
+const fs = require('fs');
+const indexPath = 'D:\\Code\\vpnclient\\nuxt-app\\.output\\public\\index.html';
+let html = fs.readFileSync(indexPath, 'utf-8');
+const before = html.includes('/_nuxt/');
+html = html.replace(/href="\/_nuxt\//g, 'href="./_nuxt/');
+html = html.replace(/src="\/_nuxt\//g, 'src="./_nuxt/');
+fs.writeFileSync(indexPath, html);
+const after = html.includes('"/_nuxt/');
+console.log('Had absolute paths:', before);
+console.log('Has absolute paths after:', after);
+console.log('First 200 chars:', html.substring(0, 300));

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/config.schema.json",
+  "productName": "Chameleon",
+  "version": "0.1.0",
+  "identifier": "com.chameleon.app",
+  "build": {
+    "frontendDist": "../nuxt-app/.output/public",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm --prefix nuxt-app run dev",
+    "beforeBuildCommand": "npm --prefix nuxt-app run build && node src-tauri/fix-paths.js"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Chameleon",
+        "width": 1100,
+        "height": 680,
+        "minWidth": 900,
+        "minHeight": 580,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "transparent": false,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "bin/sing-box.exe",
+      "geo/geoip.db",
+      "geo/geosite.db"
+    ],
+    "windows": {
+      "wix": null,
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  }
+}

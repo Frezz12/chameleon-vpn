@@ -1,0 +1,70 @@
+﻿name: Build Chameleon
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build Windows app
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            nuxt-app/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install root dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: nuxt-app
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: nuxt-app
+
+      - name: Fix frontend asset paths
+        run: node src-tauri/fix-paths.js
+
+      - name: Check Rust code
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: Build Tauri bundle
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: src-tauri
+          args: --config '{"build":{"beforeBuildCommand":""}}'
+
+      - name: Upload Windows bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: chameleon-windows
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: error

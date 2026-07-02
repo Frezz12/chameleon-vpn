@@ -15,6 +15,18 @@ fn download_with_redirects(url: &str, dest: &PathBuf) -> bool {
     false
 }
 
+#[cfg(unix)]
+fn set_unix_executable(path: &PathBuf) {
+    use std::os::unix::fs::PermissionsExt;
+    if let Ok(metadata) = fs::metadata(path) {
+        let mut permissions = metadata.permissions();
+        permissions.set_mode(0o755);
+        let _ = fs::set_permissions(path, permissions);
+    }
+}
+
+#[cfg(not(unix))]
+fn set_unix_executable(_path: &PathBuf) {}
 fn main() {
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap_or_default());
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
@@ -88,6 +100,7 @@ fn main() {
             }
 
             if binary_path.exists() {
+                set_unix_executable(&binary_path);
                 println!("cargo:warning=sing-box downloaded successfully to {:?}", binary_path);
             } else {
                 println!("cargo:warning=Failed to extract sing-box binary");

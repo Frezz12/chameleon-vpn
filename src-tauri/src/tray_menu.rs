@@ -92,8 +92,7 @@ impl TrayManager {
 }
 
 pub fn create_tray(app: &AppHandle) -> Result<tauri::tray::TrayIcon, Box<dyn std::error::Error>> {
-    // Create a simple icon (1x1 pixel PNG) as placeholder
-    let icon = create_default_icon();
+    let icon = Image::from_bytes(include_bytes!("../icons/32x32.png"))?;
 
     let tray = TrayIconBuilder::new()
         .icon(icon)
@@ -102,7 +101,7 @@ pub fn create_tray(app: &AppHandle) -> Result<tauri::tray::TrayIcon, Box<dyn std
             let id = event.id().as_ref();
             match id {
                 id if id == "exit" => {
-                    info!("Exiting via tray menu — cleaning up proxy");
+                    info!("Exiting via tray menu - cleaning up proxy");
                     let app_clone = app.clone();
                     tauri::async_runtime::spawn(async move {
                         let state = app_clone.state::<crate::AppState>();
@@ -156,24 +155,6 @@ pub fn create_tray(app: &AppHandle) -> Result<tauri::tray::TrayIcon, Box<dyn std
     Ok(tray)
 }
 
-fn create_default_icon() -> Image<'static> {
-    let mut rgba = Vec::with_capacity(32 * 32 * 4);
-    for y in 0..32u32 {
-        for x in 0..32u32 {
-            let dx = (x as f64 - 15.5) / 15.5;
-            let dy = (y as f64 - 15.5) / 15.5;
-            let dist = (dx * dx + dy * dy).sqrt();
-            if dist <= 1.0 {
-                rgba.push(0x22); rgba.push(0xBB); rgba.push(0x66); rgba.push(255);
-            } else if dist <= 1.1 {
-                rgba.push(0xFF); rgba.push(0xFF); rgba.push(0xFF); rgba.push(64);
-            } else {
-                rgba.push(0); rgba.push(0); rgba.push(0); rgba.push(0);
-            }
-        }
-    }
-    Image::new_owned(rgba, 32, 32)
-}
 
 pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let app_v = app.clone();

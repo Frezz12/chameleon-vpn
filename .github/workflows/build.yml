@@ -1,4 +1,4 @@
-﻿name: Build Chameleon
+name: Build & Release Chameleon
 
 on:
   push:
@@ -8,17 +8,54 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  build-windows:
-    name: Build Windows app
-    runs-on: windows-latest
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: windows-x64
+          - name: Linux x64
+            platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact: linux-x64
+          - name: macOS Apple Silicon
+            platform: macos-latest
+            target: aarch64-apple-darwin
+            artifact: macos-aarch64
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            patchelf \
+            pkg-config \
+            wget
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,9 +68,11 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
 
@@ -52,19 +91,200 @@ jobs:
         run: node src-tauri/fix-paths.js
 
       - name: Check Rust code
-        run: cargo check --manifest-path src-tauri/Cargo.toml
+        run: cargo check --manifest-path src-tauri/Cargo.toml --target ${{ matrix.target }}
 
       - name: Build Tauri bundle
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: src-tauri
-          args: --config '{"build":{"beforeBuildCommand":""}}'
+          args: --target ${{ matrix.target }} --config '{"build":{"beforeBuildCommand":""}}'
 
-      - name: Upload Windows bundle
+      - name: Sign bundles for updater
+        shell: bash
+        run: |
+          set -e
+          BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
+          if [ ! -d "$BUNDLE_DIR" ]; then
+            BUNDLE_DIR="src-tauri/target/release/bundle"
+          fi
+
+          KEY="${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
+          PASS="${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}"
+
+          if [ -z "$KEY" ]; then
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY is not set, updater .sig files will not be generated"
+            exit 0
+          fi
+
+          echo "=== Signing updater bundles in $BUNDLE_DIR ==="
+          find "$BUNDLE_DIR" -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.zip' -o -name '*.tar.gz' \) | while read -r file; do
+            sig="${file}.sig"
+            if [ -f "$sig" ]; then
+              echo "Already signed: $(basename "$file")"
+              continue
+            fi
+            echo "Signing: $(basename "$file")"
+            TAURI_SIGNING_PRIVATE_KEY="$KEY" TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$PASS" \
+              npx --yes @tauri-apps/cli signer sign "$file" || echo "::warning::Failed to sign $(basename "$file")"
+          done
+
+          echo "=== Generated signatures ==="
+          find "$BUNDLE_DIR" -name '*.sig' -type f || true
+
+      - name: List bundle contents
+        if: always()
+        shell: bash
+        run: |
+          find src-tauri/target -path '*/release/bundle/*' -type f 2>/dev/null || echo "No bundle files found"
+
+      - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
-          name: chameleon-windows
-          path: src-tauri/target/release/bundle/**
+          name: bundles-${{ matrix.artifact }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/**
+            src-tauri/target/release/bundle/**
           if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all bundles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bundles-*
+          path: bundles
+          merge-multiple: true
+
+      - name: List downloaded bundles
+        if: always()
+        shell: bash
+        run: |
+          find bundles -type f 2>/dev/null || echo "No files found"
+
+      - name: Generate updater latest.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          BASE_URL="https://github.com/Frezz12/chameleon-vpn/releases/download/$GITHUB_REF_NAME"
+          PUB_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          jq -n \
+            --arg version "$VERSION" \
+            --arg notes "Chameleon $GITHUB_REF_NAME" \
+            --arg pub_date "$PUB_DATE" \
+            '{version: $version, notes: $notes, pub_date: $pub_date, platforms: {}}' > latest.json
+
+          classify_file() {
+            local file="$1"
+            local name
+            name="$(basename "$file")"
+
+            if echo "$name" | grep -qiE '\.AppImage$'; then
+              echo "linux-x86_64|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE '\.(deb|rpm)$'; then
+              echo "linux-x86_64-${name##*.}|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE 'aarch64.*\.tar\.gz$|arm64.*\.tar\.gz$'; then
+              echo "darwin-aarch64|$BASE_URL/$name|${file}.sig"
+              echo "darwin-aarch64-app|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE '(x64|x86_64|amd64).*\.tar\.gz$'; then
+              echo "darwin-x86_64|$BASE_URL/$name|${file}.sig"
+              echo "darwin-x86_64-app|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE '\.tar\.gz$'; then
+              echo "darwin-aarch64|$BASE_URL/$name|${file}.sig"
+              echo "darwin-aarch64-app|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE '\.msi$'; then
+              echo "windows-x86_64|$BASE_URL/$name|${file}.sig"
+              echo "windows-x86_64-msi|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE 'setup.*\.exe$|\.exe$'; then
+              echo "windows-x86_64|$BASE_URL/$name|${file}.sig"
+              echo "windows-x86_64-nsis|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE 'aarch64.*\.dmg$|arm64.*\.dmg$'; then
+              echo "darwin-aarch64-dmg|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+            if echo "$name" | grep -qiE '\.dmg$'; then
+              echo "darwin-aarch64-dmg|$BASE_URL/$name|${file}.sig"
+              return
+            fi
+          }
+
+          records=""
+          primary_seen=""
+          while IFS= read -r -d '' file; do
+            [ -f "${file}.sig" ] || { echo "::warning::Missing signature for $(basename "$file")"; continue; }
+            mapfile -t classified < <(classify_file "$file")
+            [ "${#classified[@]}" -gt 0 ] || { echo "::debug::Skipping unrecognised bundle $(basename "$file")"; continue; }
+
+            first_key="${classified[0]%%|*}"
+            if echo "$primary_seen" | grep -qiE "(^| )${first_key}( |$)"; then
+              echo "Skipping $(basename "$file") because $first_key is already assigned"
+              continue
+            fi
+
+            primary_seen="$primary_seen $first_key"
+            for rec in "${classified[@]}"; do
+              records="$records"$'\n'"$rec"
+            done
+          done < <(find bundles -type f ! -name '*.sig' -print0)
+
+          while IFS='|' read -r key url sig_path; do
+            [ -n "${key:-}" ] || continue
+            signature="$(cat "$sig_path")"
+            jq \
+              --arg key "$key" \
+              --arg url "$url" \
+              --arg signature "$signature" \
+              '.platforms[$key] = {signature: $signature, url: $url}' \
+              latest.json > latest.tmp && mv latest.tmp latest.json
+          done <<< "$records"
+
+          jq . latest.json
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Chameleon ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            bundles/**/*.msi
+            bundles/**/*.exe
+            bundles/**/*.zip
+            bundles/**/*.dmg
+            bundles/**/*.AppImage
+            bundles/**/*.deb
+            bundles/**/*.rpm
+            bundles/**/*.tar.gz
+            bundles/**/*.sig
+            latest.json

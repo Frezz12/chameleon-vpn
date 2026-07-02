@@ -35,6 +35,7 @@
     "os:default",
     "os:allow-platform",
     "os:allow-version",
-    "os:allow-arch"
+    "os:allow-arch",
+    "updater:default"
   ]
 }

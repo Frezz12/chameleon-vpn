@@ -39,9 +39,8 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "bin/sing-box.exe",
-      "geo/geoip.db",
-      "geo/geosite.db"
+      "bin/*",
+      "geo/*"
     ],
     "windows": {
       "wix": null,
@@ -61,6 +60,15 @@
   "plugins": {
     "shell": {
       "open": true
+    },
+    "updater": {
+      "endpoints": [
+        "https://github.com/Frezz12/chameleon-vpn/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhCQ0U1RUQwNUE1MTVEQ0QKUldUTlhWRmEwRjdPaXhIUjFDRVMzQlA2YXBHWnFaT24wU3RYYWZUd3pxK2lya0M4Mmh0akd4QXkK",
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

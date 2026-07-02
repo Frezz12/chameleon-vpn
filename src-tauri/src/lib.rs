@@ -1,4 +1,4 @@
-﻿mod config_gen;
+mod config_gen;
 mod geo_db;
 mod rules_engine;
 mod speed_test;
@@ -298,7 +298,7 @@ async fn test_dns_leak(state: tauri::State<'_, AppState>) -> Result<serde_json::
     Ok(json!({
         "no_leak": all_ok,
         "results": results,
-        "message": if all_ok { "DNS requests go through VPN tunnel" } else { "DNS leak detected вЂ” some DNS servers bypass VPN" }
+        "message": if all_ok { "DNS requests go through VPN tunnel" } else { "DNS leak detected - some DNS servers bypass VPN" }
     }))
 }
 
@@ -314,6 +314,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let vpn_manager = Arc::new(Mutex::new(VpnManager::new(app.handle().clone())));
             // Inject self-reference so background tasks can access the manager
@@ -357,20 +358,14 @@ pub fn run() {
                 mgr.start_auto_ping();
             });
 
-            // Cleanup proxy on window close
-            let app_handle = app.handle().clone();
+            // Closing the main window keeps the VPN alive in the tray.
+            // Use the tray Exit item when the user wants a full shutdown.
             if let Some(window) = app.get_webview_window("main") {
-                let handle = app_handle.clone();
+                let main_window = window.clone();
                 window.on_window_event(move |event| {
-                    if let tauri::WindowEvent::CloseRequested { .. } = event {
-                        let h = handle.clone();
-                        tauri::async_runtime::spawn(async move {
-                            let state = h.state::<AppState>();
-                            let mut mgr = state.vpn_manager.lock().await;
-                            mgr.force_cleanup();
-                        });
-                        // Brief pause for cleanup
-                        std::thread::sleep(std::time::Duration::from_millis(150));
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        let _ = main_window.hide();
                     }
                 });
             }
@@ -410,7 +405,3 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
-
-
-

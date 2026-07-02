@@ -1,5 +1,5 @@
-﻿<template>
-  <div class="settings-page">
+<template>
+  <div class="settings-page" :class="{ 'is-light': isLight }">
     <div class="settings-shell">
       <section class="settings-hero">
         <div class="hero-top">
@@ -581,6 +581,99 @@ onMounted(async () => {
 .section-action-btn {
   flex-shrink: 0;
 }
+.btn {
+  appearance: none;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(150,214,255,0.12);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)),
+    rgba(8,16,30,0.74);
+  color: rgba(235,248,255,0.78);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 28px rgba(2,8,20,0.16);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+.btn svg,
+.btn-icon svg {
+  flex-shrink: 0;
+}
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(125,247,104,0.24);
+  color: #f3fff1;
+  background:
+    linear-gradient(135deg, rgba(125,247,104,0.12), rgba(46,231,205,0.08), rgba(122,90,255,0.08)),
+    rgba(8,18,32,0.90);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 34px rgba(2,8,20,0.22), 0 0 24px rgba(46,231,205,0.08);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(.98);
+}
+.btn:disabled {
+  opacity: .44;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.btn-primary {
+  border-color: rgba(125,247,104,0.30);
+  background: linear-gradient(135deg, #9bff6f 0%, #37efd3 56%, #5ba8ff 100%);
+  color: #07150f;
+  box-shadow: 0 14px 30px rgba(46,231,205,0.16), inset 0 1px 0 rgba(255,255,255,0.42);
+}
+.btn-primary:hover:not(:disabled) {
+  border-color: rgba(155,255,111,0.56);
+  background: linear-gradient(135deg, #b7ff90 0%, #4df6de 54%, #7bbcff 100%);
+  color: #06130d;
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.035);
+  border-color: rgba(255,255,255,0.075);
+  color: rgba(223,236,255,0.70);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(125,247,104,0.10), rgba(46,231,205,0.075));
+}
+.btn-icon {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(150,214,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(223,236,255,0.66);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.055);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.btn-icon:hover {
+  transform: translateY(-1px);
+  border-color: rgba(46,231,205,0.26);
+  background: rgba(46,231,205,0.10);
+  color: #dffeff;
+  box-shadow: 0 10px 22px rgba(2,8,20,0.18), 0 0 18px rgba(46,231,205,0.08);
+}
+.btn-icon.danger {
+  color: rgba(255,137,154,0.78);
+  border-color: rgba(255,91,125,0.12);
+}
+.btn-icon.danger:hover {
+  border-color: rgba(255,91,125,0.30);
+  background: rgba(255,91,125,0.10);
+  color: #ffdce3;
+}
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1010,6 +1103,152 @@ onMounted(async () => {
   background: linear-gradient(90deg, rgba(58,191,103,0.18), rgba(46,158,177,0.13)) !important;
   color: #113f2a !important;
 }
+.settings-page.is-light {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(58,191,103,0.16), transparent 28%),
+    radial-gradient(circle at 92% 12%, rgba(36,143,180,0.13), transparent 26%),
+    radial-gradient(circle at 52% 100%, rgba(122,90,255,0.08), transparent 34%),
+    linear-gradient(180deg, #f8fcff, #edf8f5) !important;
+  color: rgba(16,33,58,0.82);
+}
+.settings-page.is-light .settings-hero,
+.settings-page.is-light .settings-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(244,250,249,0.90)) !important;
+  border-color: rgba(42,109,120,0.14) !important;
+  box-shadow: 0 16px 40px rgba(39,75,86,0.10) !important;
+}
+.settings-page.is-light .settings-hero {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(58,191,103,0.17), transparent 34%),
+    radial-gradient(circle at 84% 22%, rgba(46,158,177,0.15), transparent 30%),
+    linear-gradient(150deg, rgba(255,255,255,0.97), rgba(236,248,245,0.95)) !important;
+}
+.settings-page.is-light .hero-mark-glow {
+  background: radial-gradient(circle, rgba(58,191,103,0.34), rgba(46,158,177,0.18) 42%, rgba(122,90,255,0.12) 66%, transparent 80%);
+}
+.settings-page.is-light .hero-eyebrow,
+.settings-page.is-light .hero-brand-subtitle,
+.settings-page.is-light .hero-description,
+.settings-page.is-light .mini-stat-label,
+.settings-page.is-light .section-kicker,
+.settings-page.is-light .setting-desc,
+.settings-page.is-light .subscription-url,
+.settings-page.is-light .about-label {
+  color: rgba(16,48,60,0.56) !important;
+}
+.settings-page.is-light .section-title,
+.settings-page.is-light .setting-label,
+.settings-page.is-light .subscription-name,
+.settings-page.is-light .about-value,
+.settings-page.is-light .mini-stat-value,
+.settings-page.is-light .modal-title {
+  color: rgba(16,33,58,0.88) !important;
+}
+.settings-page.is-light .hero-chip,
+.settings-page.is-light .mini-stat,
+.settings-page.is-light .setting-item,
+.settings-page.is-light .compact-field,
+.settings-page.is-light .proxy-box,
+.settings-page.is-light .subscription-card,
+.settings-page.is-light .empty-state,
+.settings-page.is-light .about-row,
+.settings-page.is-light .theme-switcher {
+  background: rgba(255,255,255,0.66) !important;
+  border-color: rgba(42,109,120,0.12) !important;
+  color: rgba(16,33,58,0.78) !important;
+}
+.settings-page.is-light .tag {
+  background: rgba(58,191,103,0.10) !important;
+  color: rgba(16,48,60,0.62) !important;
+}
+.settings-page.is-light .inline-hint,
+.settings-page.is-light .proxy-val {
+  color: #258151 !important;
+}
+.settings-page.is-light .btn {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,250,248,0.88)) !important;
+  border-color: rgba(42,109,120,0.14) !important;
+  color: rgba(16,33,58,0.74) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 12px 26px rgba(39,75,86,0.08) !important;
+}
+.settings-page.is-light .btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(58,191,103,0.13), rgba(46,158,177,0.10), rgba(122,90,255,0.06)), #fff !important;
+  border-color: rgba(58,191,103,0.26) !important;
+  color: rgba(16,33,58,0.88) !important;
+}
+.settings-page.is-light .btn-primary {
+  background: linear-gradient(135deg, #7ee26f 0%, #35cfc1 58%, #5ea7ed 100%) !important;
+  border-color: rgba(58,191,103,0.30) !important;
+  color: #062416 !important;
+  box-shadow: 0 14px 28px rgba(46,158,177,0.14), inset 0 1px 0 rgba(255,255,255,0.55) !important;
+}
+.settings-page.is-light .btn-ghost {
+  background: rgba(255,255,255,0.66) !important;
+  color: rgba(16,48,60,0.62) !important;
+}
+.settings-page.is-light .btn-icon {
+  background: rgba(255,255,255,0.68) !important;
+  border-color: rgba(42,109,120,0.13) !important;
+  color: rgba(16,48,60,0.62) !important;
+  box-shadow: 0 10px 22px rgba(39,75,86,0.08) !important;
+}
+.settings-page.is-light .btn-icon:hover {
+  background: rgba(46,158,177,0.10) !important;
+  border-color: rgba(46,158,177,0.24) !important;
+  color: rgba(16,33,58,0.84) !important;
+}
+.settings-page.is-light .btn-icon.danger {
+  color: rgba(180,50,68,0.76) !important;
+  border-color: rgba(205,54,67,0.16) !important;
+}
+.settings-page.is-light .btn-icon.danger:hover {
+  background: rgba(205,54,67,0.09) !important;
+  border-color: rgba(205,54,67,0.26) !important;
+}
+.settings-page.is-light .theme-pill {
+  color: rgba(16,48,60,0.58) !important;
+}
+.settings-page.is-light .theme-pill:hover {
+  background: rgba(46,158,177,0.08) !important;
+  color: rgba(16,33,58,0.82) !important;
+}
+.settings-page.is-light .theme-pill.active {
+  background: linear-gradient(90deg, rgba(58,191,103,0.15), rgba(46,158,177,0.11), rgba(122,90,255,0.08)) !important;
+  border-color: rgba(58,191,103,0.22) !important;
+  color: #1d6f43 !important;
+}
+.settings-page.is-light .form-group label {
+  color: rgba(16,48,60,0.54) !important;
+}
+.settings-page.is-light .form-input {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,250,248,0.90)) !important;
+  border-color: rgba(42,109,120,0.14) !important;
+  color: rgba(16,33,58,0.80) !important;
+}
+.settings-page.is-light .form-input:hover,
+.settings-page.is-light .form-input:focus {
+  border-color: rgba(58,191,103,0.30) !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(58,191,103,0.10) !important;
+}
+.settings-page.is-light .form-input::placeholder {
+  color: rgba(16,48,60,0.34) !important;
+}
+.settings-page.is-light .wide-action-btn {
+  background: linear-gradient(90deg, rgba(58,191,103,0.13), rgba(46,158,177,0.10)) !important;
+  border-color: rgba(58,191,103,0.24) !important;
+  color: #207645 !important;
+}
+.settings-page.is-light .wide-action-btn:hover {
+  background: linear-gradient(90deg, rgba(58,191,103,0.20), rgba(46,158,177,0.14)) !important;
+  color: #113f2a !important;
+}
+.settings-page.is-light .modal-overlay {
+  background: rgba(233,246,245,0.62) !important;
+}
+.settings-page.is-light .modal-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(244,250,248,0.95)) !important;
+  border-color: rgba(42,109,120,0.14) !important;
+  box-shadow: 0 24px 54px rgba(39,75,86,0.18) !important;
+}
 </style>
-
-

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="dashboard-page" :class="{ connected: vpn.connectionState === 'connected' }">
     <div class="dash-bg" :class="vpn.connectionState"/>
 
@@ -28,15 +28,7 @@
       <div class="power-wrap">
         <img src="/branding/chameleon-mark.png" :alt="appName" class="power-chameleon" />
         <div class="chameleon-scan" />
-        <div class="scale scale-a" />
-        <div class="scale scale-b" />
-        <div class="scale scale-c" />
-        <div class="mood-ring" :class="vpn.connectionState">
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
+        <div class="aurora-orbit" :class="vpn.connectionState" />
         <!-- Outer ring glow -->
         <div class="power-glow" :class="vpn.connectionState"/>
 
@@ -430,13 +422,9 @@ html.light .cloud{background:radial-gradient(ellipse,rgba(0,153,122,0.04),transp
 /* === POWER BUTTON === */
 .power-wrap{position:relative;width:214px;height:214px;margin:8px 0;display:flex;align-items:center;justify-content:center}
 .power-chameleon{position:absolute;width:146px;height:146px;object-fit:contain;opacity:.13;filter:saturate(1.25) blur(.2px);animation:chameleon-drift 8s ease-in-out infinite;pointer-events:none}
-.chameleon-scan{position:absolute;width:186px;height:186px;border-radius:50%;background:conic-gradient(from 140deg,rgba(125,247,104,0.16),rgba(46,231,205,0.08),rgba(122,90,255,0.13),rgba(125,247,104,0.16));mask:radial-gradient(circle,transparent 58%,#000 60%,#000 62%,transparent 64%);animation:spin 12s linear infinite;opacity:.72}
-.scale{position:absolute;width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,rgba(125,247,104,0.42),rgba(46,231,205,0.18));transform:rotate(45deg);opacity:.26;animation:scale-float 5s ease-in-out infinite;pointer-events:none}
-.scale-a{left:30px;top:54px}.scale-b{right:28px;top:78px;animation-delay:.8s}.scale-c{left:52px;bottom:36px;animation-delay:1.4s}
-.mood-ring{position:absolute;inset:0;border-radius:50%;animation:mood-turn 18s linear infinite;pointer-events:none}
-.mood-ring span{position:absolute;width:44px;height:7px;border-radius:999px;background:linear-gradient(90deg,transparent,#7df768,#2ee7cd,transparent);filter:drop-shadow(0 0 10px rgba(46,231,205,0.18));opacity:.42;transform-origin:center}
-.mood-ring span:nth-child(1){left:86px;top:0}.mood-ring span:nth-child(2){right:0;top:96px;transform:rotate(90deg)}.mood-ring span:nth-child(3){left:86px;bottom:0}.mood-ring span:nth-child(4){left:0;top:96px;transform:rotate(90deg)}
-.mood-ring.connected span{background:linear-gradient(90deg,transparent,#9bff6f,#2ee7cd,transparent);opacity:.62}.mood-ring.connecting span,.mood-ring.disconnecting span{background:linear-gradient(90deg,transparent,#ffd166,#ff5b7d,transparent);opacity:.52}
+.chameleon-scan{position:absolute;width:190px;height:190px;border-radius:50%;background:conic-gradient(from 140deg,transparent 0 10%,rgba(125,247,104,0.28) 18%,rgba(46,231,205,0.16) 32%,transparent 44%,rgba(91,168,255,0.18) 56%,rgba(165,111,255,0.24) 72%,transparent 88%);mask:radial-gradient(circle,transparent 57%,#000 60%,#000 63%,transparent 67%);animation:scan-turn 13s linear infinite;opacity:.76;filter:drop-shadow(0 0 18px rgba(46,231,205,.15))}
+.aurora-orbit{position:absolute;inset:-4px;border-radius:50%;pointer-events:none;background:conic-gradient(from 210deg,transparent 0 8%,rgba(155,255,111,.42) 16%,rgba(55,239,211,.30) 29%,transparent 42%,rgba(91,168,255,.24) 56%,rgba(165,111,255,.34) 72%,transparent 88%);mask:radial-gradient(circle,transparent 63%,#000 66%,#000 70%,transparent 74%);filter:blur(.45px) drop-shadow(0 0 18px rgba(46,231,205,.20));animation:aurora-turn 15s cubic-bezier(.4,0,.2,1) infinite;opacity:.84}
+.aurora-orbit.connected{background:conic-gradient(from 210deg,transparent 0 8%,rgba(155,255,111,.50) 16%,rgba(46,231,205,.36) 31%,transparent 43%,rgba(91,168,255,.26) 57%,rgba(165,111,255,.30) 74%,transparent 90%);filter:blur(.45px) drop-shadow(0 0 22px rgba(125,247,104,.22))}.aurora-orbit.connecting,.aurora-orbit.disconnecting{background:conic-gradient(from 210deg,transparent 0 8%,rgba(255,209,102,.44) 16%,rgba(255,91,125,.28) 31%,transparent 44%,rgba(91,168,255,.22) 58%,rgba(165,111,255,.28) 74%,transparent 90%)}
 
 .power-glow{
   position:absolute;inset:-10px;border-radius:50%;
@@ -588,14 +576,12 @@ html.light .power-chameleon {
   filter: saturate(1.08) drop-shadow(0 16px 26px rgba(46,158,177,0.16));
 }
 html.light .chameleon-scan {
-  background: conic-gradient(from 140deg, rgba(58,191,103,0.16), rgba(46,158,177,0.10), rgba(122,90,255,0.10), rgba(58,191,103,0.16));
-  opacity: .62;
+  background: conic-gradient(from 140deg, transparent 0 10%, rgba(58,191,103,0.28) 18%, rgba(46,158,177,0.18) 32%, transparent 44%, rgba(41,122,193,0.16) 56%, rgba(122,90,255,0.20) 72%, transparent 88%);
+  opacity: .68;
 }
-html.light .scale { background: linear-gradient(135deg, rgba(58,191,103,0.36), rgba(46,158,177,0.20)); opacity: .30; }
-html.light .mood-ring span {
-  background: linear-gradient(90deg, transparent, #2cae5b, #20bdb0, transparent);
-  filter: drop-shadow(0 0 10px rgba(46,158,177,0.15));
-  opacity: .46;
+html.light .aurora-orbit {
+  background: conic-gradient(from 210deg, transparent 0 8%, rgba(58,191,103,.36) 16%, rgba(46,158,177,.28) 31%, transparent 43%, rgba(41,122,193,.22) 57%, rgba(122,90,255,.20) 74%, transparent 90%);
+  filter: blur(.4px) drop-shadow(0 0 16px rgba(46,158,177,.16));
 }
 html.light .power-glow.disconnected { box-shadow: 0 0 62px 10px rgba(122,90,255,0.10); }
 html.light .power-glow.connected { box-shadow: 0 0 86px 15px rgba(46,158,177,0.18); }
@@ -640,8 +626,8 @@ html.light .import-btn.primary {
 @keyframes mark-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.03)}}
 @keyframes chroma-slide{0%,100%{transform:translateX(-22%);opacity:.34}50%{transform:translateX(22%);opacity:1}}
 @keyframes chameleon-drift{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
-@keyframes scale-float{0%,100%{transform:translateY(0) rotate(45deg);opacity:.18}50%{transform:translateY(-8px) rotate(45deg);opacity:.48}}
-@keyframes mood-turn{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes scan-turn{0%{transform:rotate(0deg) scale(.99);opacity:.62}50%{transform:rotate(180deg) scale(1.015);opacity:.82}100%{transform:rotate(360deg) scale(.99);opacity:.62}}
+@keyframes aurora-turn{0%{transform:rotate(0deg) scale(.99);opacity:.62}50%{transform:rotate(180deg) scale(1.025);opacity:.86}100%{transform:rotate(360deg) scale(.99);opacity:.62}}
 @keyframes pip-pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
 
